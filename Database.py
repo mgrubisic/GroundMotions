@@ -15,7 +15,7 @@ import shutil
 from pathlib import Path
 from PIL import Image
 from tkinter import messagebox
-from typing import Literal
+from typing import Literal, Self
 
 import h5py
 import originpro
@@ -27,7 +27,7 @@ from scipy.interpolate import interp1d
 from seismicutils import Records
 
 
-class Selecting:
+class Database:
     version = '2.2'
     RSN_expected = set([i for i in range(1, 21541)])  # 官网宣称有的RSN（但实际不全）
     df_info_columns = ['No.', 'RSN', 'earthquake_name', 'component', 'Rjb (km)', 'R_rup (km)',
@@ -110,17 +110,17 @@ class Selecting:
             print(f'正在校验文件 - {file}')
             cls._check_file(file)
 
-    def check_database(self):
+    def check_database(obj: Self=None):
         """进行数据库统计"""
         print('正在统计地震动本地数据库...')
-        if not self:
-            self = Selecting
-        if not all([self.file_accec, self.file_vel, self.file_disp,
-                    self.file_spec, self.file_info]):
+        if obj is None:
+            obj = Database
+        if not all([obj.file_accec, obj.file_vel, obj.file_disp,
+                    obj.file_spec, obj.file_info]):
             print('【Warining】请先导入五个hdf5文件')
             return
         # 版本号
-        f_info = h5py.File(self.file_info, 'r')
+        f_info = h5py.File(obj.file_info, 'r')
         version = f_info['VERSION'][()].decode('utf-8')
         print(f'数据库版本：{version}')
         # 检查RSN数量
@@ -132,13 +132,13 @@ class Selecting:
             RSN_exists.add(ds.attrs['RSN'])
         f_info.close()
         # 检查地震波分量总数量
-        f_accec = h5py.File(self.file_accec, 'r')
+        f_accec = h5py.File(obj.file_accec, 'r')
         n = 0
         for item in f_accec:
             n += 1
         f_accec.close()
         # 缺失地震波
-        RSN_missing = list(self.RSN_expected - RSN_exists)
+        RSN_missing = list(obj.RSN_expected - RSN_exists)
         RSN_missing = sorted(RSN_missing)
         print(f'库存地震动：{len(RSN_exists)}组，共{n}条')
         print(f'缺失地震动：{len(RSN_missing)}组')
@@ -248,9 +248,20 @@ class Selecting:
                     self._write(f'({i+1}) 按{round(para[i][0], 6)}~{round(para[i][1], 6)}周期范围的Sa_avg值(几何平均数)进行匹配，权重={weight[i]}')
 
 
-    def constrain_range(self, scale_factor: tuple=None, PGA: tuple=None, magnitude: tuple=None, Rjb: tuple=None, Rrup: tuple=None,
-                        vs30: tuple=None, D5_95: tuple=None, duration: tuple=None, strike_slip: str='all', pulse: str | bool='all',
-                        N_events: int=None, RSN_bound: tuple=None, component: list=['H1', 'H2', 'V']):
+    def constrain_range(self,
+                        scale_factor: tuple=None,
+                        PGA: tuple=None,
+                        magnitude: tuple=None,
+                        Rjb: tuple=None,
+                        Rrup: tuple=None,
+                        vs30: tuple=None,
+                        D5_95: tuple=None,
+                        duration: tuple=None,
+                        strike_slip: str='all',
+                        pulse: str | bool='all',
+                        N_events: int=None,
+                        RSN_bound: tuple=None,
+                        component: list=['H1', 'H2', 'V']):
         """定义约束范围
 
         Args:
@@ -263,17 +274,17 @@ class Selecting:
             D5_95 (tuple, optional): 有效持时，默认None
             duration (tuple, optional): 持时，默认None
             strike_slip (str, optional): 振源机制，默认'all'
-            * [all] all types
-            * [a] strike slip
-            * [b] normal/oblique
-            * [c] reverse/oblique
-            * [d] strike slip + normal/oblique
-            * [e] strike slip + reverse/oblique
-            * [f] normal/oblique + reverse/oblique\n
+              [all] all types  
+              [a] strike slip  
+              [b] normal/oblique  
+              [c] reverse/oblique  
+              [d] strike slip + normal/oblique  
+              [e] strike slip + reverse/oblique  
+              [f] normal/oblique + reverse/oblique  
             pulse (str | bool, optional): 脉冲型地震，默认'all'
-            * [all] 不限定范围
-            * [True] 仅脉冲型
-            * [False] 仅非脉冲型\n
+              [all] 不限定范围  
+              [True] 仅脉冲型  
+              [False] 仅非脉冲型  
             N_events (int, optional): 相同地震事件所允许的最大出现次数，默认None   
             RSN_bound (tuple, optional): RSN范围，默认None
             component (list, optional): 地震动分量，默认['H1', 'H2', 'V']，可根据需要删减列表元素
@@ -1052,24 +1063,6 @@ class WriteOrigin():
         wb = self.op.find_book('w', obj_name)
         if wb:
             wb.destroy()
-
-if __name__ == "__main__":
-    file_acc = r'G:\NGAWest2\Acceleration.hdf5'
-    file_vel = r'G:\NGAWest2\Velocity.hdf5'
-    file_disp = r'G:\NGAWest2\Displacement.hdf5'
-    file_spec = r'G:\NGAWest2\Spectra.hdf5'
-    file_info = r'G:\NGAWest2\Info.hdf5'
-    selector = Selecting()
-    selector.import_files(file_acc, file_vel, file_disp, file_spec, file_info)
-    selector.target_spectra('DBE谱J.txt')
-    selector.scaling_approach('a', para=1)
-    selector.matching_rules(rules=['c'], para=[(0.1, 2)], weight=[1])
-    selector.constrain_range(N_events=5, scale_factor=(0.2, 10), component=['H1'])
-    selected_records, records_info = selector.run(35)
-    selector.extract_records('选波', files=selected_records, file_SF_error=records_info)
-    # selector.check_database()
-
-
 
 
 
