@@ -258,15 +258,30 @@ def _convention_update(
     file_disp: str | Path,
     file_spec: str | Path,
     file_info: str | Path,
-    *patch: Path,
+    patch_dir: Path | str,
 ):
-    """常规的添加地震动的升级"""
+    """将地震动添加至数据库
+
+    Args:
+        old_version (str): 旧版本号，如"2.1"
+        new_version (str): 新版本号，如"2.2"
+        file_acc (str | Path): 加速度数据库路径
+        file_vel (str | Path): 速度数据库路径
+        file_disp (str | Path): 位移数据库路径
+        file_spec (str | Path): 反映谱数据库路径
+        file_info (str | Path): 地震动信息数据库路径
+        patch_dir (Path | str): 更新补丁所在文件夹
+
+    Raises:
+        FileNotFoundError: 找不到更新补丁
+    """
     if float(_get_version(file_info)) >= float(new_version):
         return
     print(f'更新中... ({old_version} -> {new_version})')
     expected_patch_name = 'update_' + old_version.replace('.', '') + '_' + new_version.replace('.', '') + '.patch'  # patch文件的命名
-    for file in patch:
-        if Path(file).name == expected_patch_name:
+    patch_dir = Path(patch_dir)
+    for file in patch_dir.iterdir():
+        if file.name == expected_patch_name:
             break
     else:
         raise FileNotFoundError(f'未找到补丁{expected_patch_name}')
@@ -436,36 +451,75 @@ def _convention_update(
     f_info.close()
     print('完成')
 
-
-def update(
+def _update_24_25(
     file_acc: str | Path,
     file_vel: str | Path,
     file_disp: str | Path,
     file_spec: str | Path,
     file_info: str | Path,
-    *patch: Path
+    patch: str | Path,
 ):
+    import pandas as pd
+
+    if float(_get_version(file_info)) >= 2.5:
+        return
+    print(f'更新中... (2.4 -> 2.5)')
+    patch = Path(patch)
+    expected_patch_name = 'updata_24_25.patch'  # patch文件的命名
+    if not patch.exists():
+        raise FileNotFoundError(f'未找到补丁{expected_patch_name}')
+    f_acc = h5py.File(file_acc, 'a')
+    f_vel = h5py.File(file_vel, 'a')
+    f_disp = h5py.File(file_disp, 'a')
+    f_spec = h5py.File(file_spec, 'a')
+    f_info = h5py.File(file_info, 'a')
+    with open(patch, 'rb') as f:
+        df: pd.DataFrame = pickle.load(f)
+    for i in range(len(df)):
+        RSN, H1_d5_75, H1_d5_95, H2_d5_75, H2_d5_95, V_d5_75, V_d5_95, d5_75, d5_95 = df.iloc[i]
+        RSN = int(RSN)
+        f_info[f'RSN{RSN}'].attrs['duration_5_75'] = d5_75
+        f_info[f'RSN{RSN}'].attrs['duration_5_95'] = d5_95
+        f_info[f'RSN{RSN}'].attrs['duration_5_75_H1'] = H1_d5_75
+        f_info[f'RSN{RSN}'].attrs['duration_5_95_H1'] = H1_d5_95
+        f_info[f'RSN{RSN}'].attrs['duration_5_75_H1'] = H1_d5_75
+        f_info[f'RSN{RSN}'].attrs['duration_5_95_H1'] = H1_d5_95
+        f_info[f'RSN{RSN}'].attrs['duration_5_75_V'] = V_d5_75
+        f_info[f'RSN{RSN}'].attrs['duration_5_95_V'] = V_d5_95
+    del f_info['VERSION']
+    del f_spec['VERSION']
+    del f_vel['VERSION']
+    del f_disp['VERSION']
+    del f_acc['VERSION']
+    f_info['VERSION'] = 2.5
+    f_spec['VERSION'] = 2.5
+    f_vel['VERSION'] = 2.5
+    f_disp['VERSION'] = 2.5
+    f_acc['VERSION'] = 2.5
+    f_acc.close()
+    f_vel.close()
+    f_disp.close()
+    f_spec.close()
+    f_info.close()
+
+
+if __name__ == "__main__":
+    file_acc = r'H:\NGAWest2\V2.5\Acceleration.hdf5'
+    file_vel = r'H:\NGAWest2\V2.5\Velocity.hdf5'
+    file_disp = r'H:\NGAWest2\V2.5\Displacement.hdf5'
+    file_spec = r'H:\NGAWest2\V2.5\Spectra.hdf5'
+    file_info = r'H:\NGAWest2\V2.5\Info.hdf5'
+    # patch = r'F:\Projects\GroundMotions\patch\update_22_23.patch'
     _check_file_exists(file_acc)
     _check_file_exists(file_vel)
     _check_file_exists(file_disp)
     _check_file_exists(file_spec)
     _check_file_exists(file_info)
     all_files = (file_acc, file_vel, file_disp, file_spec, file_info)
-    _update_10_20(*all_files)
-    _update_20_21(*all_files, *patch)
-    _convention_update('2.1', '2.2', *all_files, *patch)
-
-
-
-if __name__ == "__main__":
-    file_acc = r'F:\Projects\GroundMotions\temp\Acceleration.hdf5'
-    file_vel = r'F:\Projects\GroundMotions\temp\Velocity.hdf5'
-    file_disp = r'F:\Projects\GroundMotions\temp\Displacement.hdf5'
-    file_spec = r'F:\Projects\GroundMotions\temp\Spectra.hdf5'
-    file_info = r'F:\Projects\GroundMotions\temp\Info.hdf5'
-    # patch = r'F:\Projects\GroundMotions\developer\update_20_21.patch'
-    patch = r'F:\Projects\GroundMotions\developer\update_21_22.patch'
-    update(file_acc, file_vel, file_disp, file_spec, file_info, patch)
+    # _update_10_20(*all_files)
+    # _update_20_21(*all_files, *patch)
+    # _convention_update('2.3', '2.4', *all_files, r'F:\Projects\GroundMotions\patch')
+    _update_24_25(*all_files, patch='patch/updata_24_25.patch')
 
 """
 .patck文件命名规则：

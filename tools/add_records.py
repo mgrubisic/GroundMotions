@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 
-def generate_pkl(dir_ls: list[str], patch_name: str):
+def add_records(dir_ls: list[str], patch_name: str):
     """将PEER上下载的地震动进行解析并写入pkl
     records字典的数据结构：
     records = {
@@ -116,37 +116,37 @@ def generate_pkl(dir_ls: list[str], patch_name: str):
                 print(f'{file_A_H1.name}不存在')
                 records[n]['data']['H1'][RSN_] = None
             else:
-                A_H1, dt_A_H1, th_A_H1 = parse_file(file_A_H1)
-                V_H1, dt_V_H1, th_V_H1 = parse_file(file_V_H1)
-                D_H1, dt_D_H1, th_D_H1 = parse_file(file_D_H1)
+                A_H1, dt_A_H1, th_A_H1 = _parse_file(file_A_H1)
+                V_H1, dt_V_H1, th_V_H1 = _parse_file(file_V_H1)
+                D_H1, dt_D_H1, th_D_H1 = _parse_file(file_D_H1)
                 records[n]['data']['H1'][RSN_] = [(A_H1, dt_A_H1, th_A_H1), (V_H1, dt_V_H1, th_V_H1), (D_H1, dt_D_H1, th_D_H1)]
             if not file_A_H2.exists():
                 print(f'{file_A_H1.name}不存在')
                 records[n]['data']['H2'][RSN_] = None
             else:
-                A_H2, dt_A_H2, th_A_H2 = parse_file(file_A_H2)
-                V_H2, dt_V_H2, th_V_H2 = parse_file(file_V_H2)
-                D_H2, dt_D_H2, th_D_H2 = parse_file(file_D_H2)
+                A_H2, dt_A_H2, th_A_H2 = _parse_file(file_A_H2)
+                V_H2, dt_V_H2, th_V_H2 = _parse_file(file_V_H2)
+                D_H2, dt_D_H2, th_D_H2 = _parse_file(file_D_H2)
                 records[n]['data']['H2'][RSN_] = [(A_H2, dt_A_H2, th_A_H2), (V_H2, dt_V_H2, th_V_H2), (D_H2, dt_D_H2, th_D_H2)]
             if not file_A_V.exists():
                 print(f'{file_A_H1.name}不存在')
                 records[n]['data']['V'][RSN_] = None
             else:
-                A_V, dt_A_V, th_A_V = parse_file(file_A_V)
-                V_V, dt_V_V, th_V_V = parse_file(file_V_V)
-                D_V, dt_D_V, th_D_V = parse_file(file_D_V)
+                A_V, dt_A_V, th_A_V = _parse_file(file_A_V)
+                V_V, dt_V_V, th_V_V = _parse_file(file_V_V)
+                D_V, dt_D_V, th_D_V = _parse_file(file_D_V)
                 records[n]['data']['V'][RSN_] = [(A_V, dt_A_V, th_A_V), (V_V, dt_V_V, th_V_V), (D_V, dt_D_V, th_D_V)]
     with open(patch_name, 'wb') as f:
         pickle.dump(records, f)
 
 
-def parse_file(file: Path) -> tuple[int, float, np.ndarray]:
+def _parse_file(file: Path) -> tuple[int, float, np.ndarray]:
     """解析原初.AT2、.VT2、.DT2文件"""
     with open(file, 'r') as f:
         text = f.read()
         lines = text.split('\n')
     p1 = re.compile(r'NPTS=([ 0-9.]+)')
-    p2 = re.compile(r'DT=([ 0-9.]+)SEC')
+    p2 = re.compile(r'DT=([ 0-9.]+)SE')
     res1 = re.findall(p1, text)
     res2 = re.findall(p2, text)
     file_name = file.absolute().as_posix()
@@ -168,12 +168,15 @@ def parse_file(file: Path) -> tuple[int, float, np.ndarray]:
 if __name__ == "__main__":
     
     dir_ls = [
-        'temp/records1',
-        'temp/records2',
-        'temp/records3',
+        'temp/6',
+        'temp/7',
+        'temp/8',
+        'temp/9',
+        'temp/10',
+        'temp/11',  
     ]  # PEER上下载的地震动压缩包解压后的文件夹
 
-    generate_pkl(dir_ls, patch_name='developer/update_21_22.patch')
+    add_records(dir_ls, patch_name='patch/update_23_24.patch')
 
 
 """
