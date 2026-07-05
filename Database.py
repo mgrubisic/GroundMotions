@@ -28,7 +28,7 @@ from seismicutils import Records
 
 
 class Database:
-    version = '2.4'
+    version = '2.5'
     RSN_expected = set([i for i in range(1, 21541)])  # 官网宣称有的RSN（但实际不全）
     df_info_columns = ['No.', 'RSN', 'earthquake_name', 'component', 'Rjb (km)', 'R_rup (km)',
                         'Tp-pluse (s)', 'arias Intensity (m/s)','5-75% Duration (s)',

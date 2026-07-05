@@ -2,11 +2,11 @@ from database import Database
 import numpy as np
 
 
-file_acc = r'H:\NGAWest2\V2.2\Acceleration.hdf5'
-file_vel = r'H:\NGAWest2\V2.2\Velocity.hdf5'
-file_disp = r'H:\NGAWest2\V2.2\Displacement.hdf5'
-file_spec = r'H:\NGAWest2\V2.2\Spectra.hdf5'
-file_info = r'H:\NGAWest2\V2.2\Info.hdf5'
+file_acc = r'H:\NGAWest2\V2.5\Acceleration.hdf5'
+file_vel = r'H:\NGAWest2\V2.5\Velocity.hdf5'
+file_disp = r'H:\NGAWest2\V2.5\Displacement.hdf5'
+file_spec = r'H:\NGAWest2\V2.5\Spectra.hdf5'
+file_info = r'H:\NGAWest2\V2.5\Info.hdf5'
 selector = Database(r'results')
 selector.import_files(file_acc, file_vel, file_disp, file_spec, file_info)
 selector.target_spectra(r"spec_data\DBE_AS.txt")

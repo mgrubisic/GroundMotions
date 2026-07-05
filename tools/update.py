@@ -482,8 +482,8 @@ def _update_24_25(
         f_info[f'RSN{RSN}'].attrs['duration_5_95'] = d5_95
         f_info[f'RSN{RSN}'].attrs['duration_5_75_H1'] = H1_d5_75
         f_info[f'RSN{RSN}'].attrs['duration_5_95_H1'] = H1_d5_95
-        f_info[f'RSN{RSN}'].attrs['duration_5_75_H1'] = H1_d5_75
-        f_info[f'RSN{RSN}'].attrs['duration_5_95_H1'] = H1_d5_95
+        f_info[f'RSN{RSN}'].attrs['duration_5_75_H2'] = H2_d5_75
+        f_info[f'RSN{RSN}'].attrs['duration_5_95_H2'] = H2_d5_95
         f_info[f'RSN{RSN}'].attrs['duration_5_75_V'] = V_d5_75
         f_info[f'RSN{RSN}'].attrs['duration_5_95_V'] = V_d5_95
     del f_info['VERSION']
@@ -491,11 +491,11 @@ def _update_24_25(
     del f_vel['VERSION']
     del f_disp['VERSION']
     del f_acc['VERSION']
-    f_info['VERSION'] = 2.5
-    f_spec['VERSION'] = 2.5
-    f_vel['VERSION'] = 2.5
-    f_disp['VERSION'] = 2.5
-    f_acc['VERSION'] = 2.5
+    f_info['VERSION'] = '2.5'
+    f_spec['VERSION'] = '2.5'
+    f_vel['VERSION'] = '2.5'
+    f_disp['VERSION'] = '2.5'
+    f_acc['VERSION'] = '2.5'
     f_acc.close()
     f_vel.close()
     f_disp.close()
