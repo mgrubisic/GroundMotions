@@ -261,6 +261,7 @@ class Database:
                         pulse: str | bool='all',
                         N_events: int=None,
                         RSN_bound: tuple=None,
+                        RSN_ls: list[int]=None,
                         component: list=['H1', 'H2', 'V']):
         """定义约束范围
 
@@ -287,6 +288,7 @@ class Database:
               [False] 仅非脉冲型  
             N_events (int, optional): 相同地震事件所允许的最大出现次数，默认None   
             RSN_bound (tuple, optional): RSN范围，默认None
+            RSN_ls (list[int], optional): RSN列表，用于筛选特定RSN，默认None
             component (list, optional): 地震动分量，默认['H1', 'H2', 'V']，可根据需要删减列表元素
         """
         self.range_scale_factor = scale_factor
@@ -300,8 +302,10 @@ class Database:
         self.range_strike_slip = strike_slip
         self.range_pulse = pulse
         self.range_N_events = N_events
-        if RSN_bound:
+        if RSN_bound is not None:
             self.range_RSN = (int(RSN_bound[0]), int(RSN_bound[1]))
+        if RSN_ls is not None:
+            self.RSN_ls = RSN_ls
         self.range_component = component
 
     def run(self, number: int) -> tuple[list[str], dict]:
@@ -390,6 +394,8 @@ class Database:
                 elif not self.range_pulse and type(Tp) is float:
                     continue
             if self.range_RSN and not self.range_RSN[0] <= RSN <= self.range_RSN[1]:
+                continue
+            if self.RSN_ls and RSN not in self.RSN_ls:
                 continue
             if 'H1' in self.range_component:
                 files_within_range.append(H1_file)
@@ -1063,7 +1069,3 @@ class WriteOrigin():
         wb = self.op.find_book('w', obj_name)
         if wb:
             wb.destroy()
-
-
-
-

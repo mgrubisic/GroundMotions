@@ -168,3 +168,4 @@ results
 temp/
 make_patch/
 patch/
+temp*.py
