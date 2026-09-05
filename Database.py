@@ -64,6 +64,7 @@ class Database:
         self.range_pulse = 'all'
         self.range_N_events = None
         self.range_RSN = None
+        self.RSN_ls = None
         self.range_component = ['H1', 'H2', 'V']
         self.norm_weight = None
         self.selecting_text = ''
